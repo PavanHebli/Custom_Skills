@@ -1,0 +1,8 @@
+{
+  "name": "codemap",
+  "version": "0.1.0",
+  "description": "Builds a CODEMAP.md in every folder so the AI can navigate the codebase without grepping, and keeps the maps up to date automatically.",
+  "author": {
+    "name": "Pavan Hebli"
+  }
+}

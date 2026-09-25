@@ -1,0 +1,8 @@
+{
+  "name": "explain-code",
+  "version": "0.1.0",
+  "description": "Explains code block by block, with snippets, line links, domain-aware terms, and callouts for complex logic.",
+  "author": {
+    "name": "Pavan Hebli"
+  }
+}

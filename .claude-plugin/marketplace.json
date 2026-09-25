@@ -1,0 +1,21 @@
+{
+  "name": "custom-skills",
+  "owner": {
+    "name": "Pavan Hebli"
+  },
+  "metadata": {
+    "description": "A growing collection of custom Claude Code skills."
+  },
+  "plugins": [
+    {
+      "name": "explain-code",
+      "source": "./plugins/explain-code",
+      "description": "Explains code block by block, with snippets, line links, domain-aware terms, and callouts for complex logic."
+    },
+    {
+      "name": "codemap",
+      "source": "./plugins/codemap",
+      "description": "Builds a CODEMAP.md in every folder so the AI can navigate the codebase without grepping, and keeps the maps up to date automatically."
+    }
+  ]
+}
