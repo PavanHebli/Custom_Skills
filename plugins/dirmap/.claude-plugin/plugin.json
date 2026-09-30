@@ -1,0 +1,16 @@
+{
+  "name": "dirmap",
+  "version": "0.3.0",
+  "description": "Builds a DIRMAP.md in every folder so the AI can navigate the codebase without grepping, and keeps the maps up to date automatically.",
+  "author": {
+    "name": "Pavan Hebli"
+  },
+  "homepage": "https://github.com/PavanHebli/Custom_Skills",
+  "repository": "https://github.com/PavanHebli/Custom_Skills",
+  "keywords": [
+    "navigation",
+    "codebase",
+    "context",
+    "tokens"
+  ]
+}

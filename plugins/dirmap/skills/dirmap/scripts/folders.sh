@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lists the folders codemap should map, deepest first, so child maps are
+# Lists the folders dirmap should map, deepest first, so child maps are
 # written before the parent maps that summarize them.
 #
 #   folders.sh all             every folder with tracked or untracked (not ignored)
@@ -33,7 +33,7 @@ case "$mode" in
 esac
 
 printf '%s\n' "$files" \
-  | grep -vE '(^|/)CODEMAP\.md$' \
+  | grep -vE '(^|/)DIRMAP\.md$' \
   | grep -v '^$' \
   | awk -v all="$all" '
       function emit(d,   depth, q) {

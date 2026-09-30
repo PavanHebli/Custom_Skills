@@ -4,5 +4,13 @@
   "description": "Explains code block by block, with snippets, line links, domain-aware terms, and callouts for complex logic.",
   "author": {
     "name": "Pavan Hebli"
-  }
+  },
+  "homepage": "https://github.com/PavanHebli/Custom_Skills",
+  "repository": "https://github.com/PavanHebli/Custom_Skills",
+  "keywords": [
+    "explain",
+    "code-review",
+    "onboarding",
+    "learning"
+  ]
 }

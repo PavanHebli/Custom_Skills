@@ -1,5 +1,5 @@
 {
-  "description": "codemap: load the root map at session start, and keep CODEMAP.md files up to date after Claude edits code. Does nothing in repos without a root CODEMAP.md.",
+  "description": "dirmap: load the root map at session start, and keep DIRMAP.md files up to date after Claude edits code (a script updates what it can; Claude is only asked for what needs judgement). Does nothing in repos without a root DIRMAP.md.",
   "hooks": {
     "SessionStart": [
       {
@@ -8,11 +8,11 @@
         ]
       }
     ],
-    "PostToolUse": [
+    "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/mark-dirty.sh\"" }
+          { "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/snapshot.sh\"" }
         ]
       }
     ],
