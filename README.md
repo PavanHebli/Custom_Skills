@@ -19,7 +19,7 @@ In Claude Code:
 
 Update later with `/plugin marketplace update custom-skills`. Remove a plugin with `claude plugin uninstall <name>@custom-skills`.
 
-**Requirements:** Claude Code, `git`, and a Unix shell (macOS or Linux; on Windows use WSL). The scripts use only `bash`, `git`, `awk`, `sed` and `grep`. Nothing needs a network connection.
+**Requirements:** Claude Code and a Unix shell (macOS or Linux; on Windows use WSL). The scripts use only `bash`, `awk`, `sed`, `grep` and `find`. Nothing needs git or a network connection.
 
 ## explain-code
 
@@ -27,17 +27,32 @@ Open a file (or select some code) and run `/explain-code`, or just ask "explain 
 
 ## dirmap
 
-**The idea:** instead of grepping through a codebase every time, Claude reads a short map first (which folder holds what, which file defines what) and goes straight to the right files. It searches only when the maps don't lead anywhere.
+**The idea:** instead of grepping through a codebase every time, the model reads a short map first (which folder holds what, which file defines what) and goes straight to the right files. It searches only when the maps don't lead anywhere.
+
+There are no hooks, no background processes, and no git. Everything is plain text, plain Markdown and a few shell scripts, so it works in any AI coding agent that can read `AGENTS.md` and run a command.
 
 ### Use it
 
-1. In your project, run **`/dirmap`**. A script drafts a map for every folder, filling in real file links and the functions, classes and routes each file actually defines. Claude then reads the files and writes a one-line purpose for each, and a checker confirms no link or symbol is made up.
-2. The maps are ordinary files. Review them, then commit the `DIRMAP.md` files so your teammates get them too. (dirmap never runs `git` commands that change your repo.)
-3. From then on:
-   - **Each new session** starts with the root map loaded, plus a warning if files changed since the maps were built.
-   - **When Claude edits code**, the maps are updated for you (details below). Most edits change nothing in a map, so most edits cost nothing extra.
-   - **After changes made outside Claude** (your own edits, `git pull`), run `/dirmap` again. It updates only the folders that changed.
+1. In your project, run **`/dirmap`** (or ask Claude to map the codebase: it will offer). It first asks **one** question that lists everything it is about to write, and writes nothing until you say yes. Then it will:
+   - copy a few scripts into a `.dirmap/` folder in your project;
+   - draft a map for every folder, with real file links and the functions, classes and routes each file actually defines;
+   - read the files and write a one-line purpose for each, then check that no link or symbol is made up;
+   - add a short **Dirmap** section to `AGENTS.md` (and a `CLAUDE.md` pointing to it). That section is what tells agents to check the maps before searching, and to run one command after editing.
+
+   | Your project has | What it does |
+   |---|---|
+   | No `AGENTS.md` | Creates it with the Dirmap section |
+   | An `AGENTS.md` | Adds the section at the end and never overwrites your text (skips it if a `## Dirmap` section is already there) |
+   | No `CLAUDE.md` | Creates one containing only `@AGENTS.md`, so Claude Code reads the same rules |
+   | A `CLAUDE.md` that doesn't mention `AGENTS.md` | Adds the section to it as well |
+2. Review the maps, then commit `DIRMAP.md`, `.dirmap/` and the instruction files so your teammates get them too. (dirmap never runs `git` commands that change your repo.)
+3. From then on, nothing else to do:
+   - **To find code**, the model reads the root `DIRMAP.md`, then the folder's, then the files, before it would grep.
+   - **After the model changes files**, it decides for each one whether the change touched what the file is *for*, then runs `bash .dirmap/sync.sh` on those files. The script fixes the rows and symbol lists and asks about any purpose that may be out of date.
+   - **After your own edits or a `git pull`**, run `/dirmap` again, or `bash .dirmap/sync.sh` with no arguments to check the whole project.
    - **`/dirmap-load src/auth`** loads that folder's maps and everything below it. `/dirmap-load all` loads every map.
+
+**The first time an agent runs `sync.sh`, your tool will probably ask you to approve the command.** Choose "always allow" for `bash .dirmap/sync.sh` (in Claude Code: `/permissions`, or add `Bash(bash .dirmap/sync.sh)` to the allowed commands) so it runs without asking each time. It only reads your source files and rewrites `DIRMAP.md` files.
 
 ### What a map looks like
 
@@ -57,30 +72,35 @@ The root `DIRMAP.md` also has a **feature map** that groups files by feature (au
 
 ### How the maps stay up to date
 
-Three small hooks do the work. All of them do nothing in a repo without a root `DIRMAP.md`, so installing the plugin changes nothing until you run `/dirmap`. Type `/hooks` in Claude Code to see them.
+A row has three parts, and each has one owner:
 
-| Hook | When it fires | What it does |
+| Part of a row | Owner | How it stays right |
 |---|---|---|
-| `SessionStart` | A session starts, resumes, or is compacted | Adds the root `DIRMAP.md` to Claude's context |
-| `PreToolUse` (Edit/Write) | Just before Claude edits a file | Saves a snapshot of the file (its symbols and a copy) to your temp folder, once per turn |
-| `Stop` | Claude is about to finish its reply | Compares each edited file with its snapshot and updates the maps itself where a script can. Asks Claude for help only when judgement is needed, at most once per reply. |
+| File name | The script | A row whose file is gone is removed, and a file with no row gets one |
+| Key symbols | The script | Regenerated from the file every time, so it is always exact |
+| **Purpose** | **The model** | Judged by the model at the end of a task. The script never rewrites it. |
 
-| What changed | Who updates the map |
+`sync.sh` needs no git and no record of the past: it compares each map with the files as they are now.
+
+| What changed | What happens |
 |---|---|
-| An edit inside a function (same functions, classes and routes) | Nobody: the map is still right |
-| A function, class or route added or removed | The script edits that row's *Key symbols* cell and keeps the rest |
+| Formatting, or a bug fix inside a function | The symbols are the same, so nothing changes and nothing is asked |
+| A function, class or route added or removed | The script rewrites the Key symbols cell, and asks whether the Purpose still fits |
 | A file deleted | The script removes its row |
-| A new file | The script adds its row with the real symbols. Claude writes the one-line purpose. |
-| A new folder | The script drafts its map and links it from the parent. Claude writes the purposes. |
-| A file largely rewritten, or its top comment changed | Claude rechecks that one row's purpose |
+| A new file | The script adds its row with the real symbols. The model writes the one-line purpose. |
+| A new folder (when you name one of its files) | The script drafts its map and links it from the parent. The model writes the purposes. |
 
-**What the plugin touches:** the only files it writes in your repo are `DIRMAP.md` files. Snapshots go to your system temp folder and are deleted at the end of each turn. It makes no network calls. The scripts are short and commented: [plugins/dirmap/scripts](plugins/dirmap/scripts) and [plugins/dirmap/skills/dirmap/scripts](plugins/dirmap/skills/dirmap/scripts).
+The question the script prints is just text: bash can't call a model, so it appears in the output of the command the model ran, and the model decides what to do with it. dirmap can't *force* a model to refresh the maps. The instruction asks, and in our tests with a small model it did. If a map ever looks stale, run `/dirmap` or `bash .dirmap/sync.sh`.
 
-**Known gaps:**
-- Files deleted or moved with shell commands (`rm`, `mv`) don't trigger the edit hook, unless another file in the same folder is edited in that turn. Run `/dirmap` to catch the rest: it compares against git.
+**What dirmap writes:** `DIRMAP.md` files, the `.dirmap/` folder (scripts only), and, with your permission, the Dirmap section in `AGENTS.md` and `CLAUDE.md`. It makes no network calls. Skipped as non-source: `node_modules`, `.venv`, `venv`, `env`, `dist`, `build`, `target`, `vendor`, caches, hidden tool folders, lock files, and minified files. It doesn't read `.gitignore`.
+
+**Known limits:**
+- Nothing forces a model to read the maps or to run `sync.sh`. See above.
+- A change that keeps the same function names but changes what the code does can't be seen by a script. The instruction tells the model to rewrite the Purpose itself in that case.
 - The maps describe what files are *for* and what they define. They aren't an index of every usage, so "find every use of X" still needs a search.
 - Symbol extraction is built in for Python, JavaScript/TypeScript and Go. Other languages still get a map with links and descriptions, but no symbol lists.
+- A new folder is only mapped when you run `/dirmap` or name one of its files to `sync.sh`.
 
 ### Other AI tools
 
-The hooks are specific to Claude Code. The maps are plain Markdown, so any tool can read them. `/dirmap` offers to add a short "Dirmap" section to your `AGENTS.md` (and a `CLAUDE.md` that points to it), which tells other agents to read the maps first and keep them updated.
+The skill is a standard `SKILL.md` folder (`plugins/dirmap/skills/dirmap`), and the instruction block is plain Markdown. In another agent, copy the skill folder into that tool's skills location, or just run its scripts by hand and paste the block into the tool's instructions file. I have only tested it in Claude Code.

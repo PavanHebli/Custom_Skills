@@ -1,7 +1,7 @@
 {
   "name": "dirmap",
-  "version": "0.3.0",
-  "description": "Builds a DIRMAP.md in every folder so the AI can navigate the codebase without grepping, and keeps the maps up to date automatically.",
+  "version": "0.6.0",
+  "description": "Gives every folder a short DIRMAP.md so AI coding agents find code by following maps instead of searching, and keeps the maps current with one command. No hooks and no git: works in any agent that reads AGENTS.md.",
   "author": {
     "name": "Pavan Hebli"
   },
@@ -11,6 +11,7 @@
     "navigation",
     "codebase",
     "context",
-    "tokens"
+    "tokens",
+    "agents-md"
   ]
 }

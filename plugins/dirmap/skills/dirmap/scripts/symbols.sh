@@ -66,12 +66,10 @@ fi
 dir="${1:?usage: symbols.sh <folder>}"
 dir="${dir%/}"
 
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  files=$(git ls-files --cached --others --exclude-standard -- "$dir" \
-    | awk -v d="$dir" '{ rel = (d == ".") ? $0 : substr($0, length(d) + 2); if (rel !~ /\//) print $0 }')
-else
-  files=$(find "$dir" -maxdepth 1 -type f | sed 's#^\./##')
-fi
+here="$(cd "$(dirname "$0")" && pwd)"
+. "$here/lib.sh"
+files=$(list_files \
+  | awk -v d="$dir" 'd == "." ? $0 !~ /\// : (index($0, d "/") == 1 && substr($0, length(d) + 2) !~ /\//)')
 
 printf '%s\n' "$files" | grep -vE '(^|/)DIRMAP\.md$' | sort | while IFS= read -r f; do
   [ -f "$f" ] || continue

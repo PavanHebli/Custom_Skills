@@ -7,12 +7,13 @@
 #   check.sh            check every map (run from the repo root)
 #   check.sh <map>...   check only the given maps
 
+here="$(cd "$(dirname "$0")" && pwd)"
+. "$here/lib.sh"
+
 if [ "$#" -gt 0 ]; then
   maps=$(printf '%s\n' "$@")
-elif git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  maps=$(git ls-files --cached --others --exclude-standard | grep -E '(^|/)DIRMAP\.md$')
 else
-  maps=$(find . -name DIRMAP.md -not -path '*/node_modules/*' | sed 's#^\./##')
+  maps=$(list_maps)
 fi
 
 problems=0
